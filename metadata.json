@@ -1,0 +1,5 @@
+{
+  "name": "Quantara",
+  "description": "High-fidelity React implementation of a Quantum Finance platform suite featuring landing pages for Q-Val, ReguSim, SukukGuard, and Wa'dWizard.",
+  "requestFramePermissions": []
+}
