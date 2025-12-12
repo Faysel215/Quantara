@@ -21,6 +21,17 @@ const App: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Handle Page Titles
+  useEffect(() => {
+    switch (activePage) {
+        case 'HOME': document.title = 'Quantara | Quantum Finance Architecture'; break;
+        case 'QVAL': document.title = 'Q-Val | Quantum Valuation Engine'; break;
+        case 'SUKUK': document.title = 'SukukGuard | Smart Contract Security'; break;
+        case 'REGUSIM': document.title = 'ReguSim | Systemic Risk Simulation'; break;
+        case 'WAD': document.title = "Wa'dWizard | Derivative Structuring"; break;
+    }
+  }, [activePage]);
+
   // Handle Hash Routing (Deep Linking for Static Hosts)
   useEffect(() => {
     const handleHashChange = () => {
