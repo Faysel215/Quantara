@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type Page = 'HOME' | 'QVAL' | 'REGUSIM' | 'SUKUK' | 'WAD';
+export type Page = 'HOME' | 'QVAL' | 'REGUSIM' | 'SUKUK' | 'WAD' | 'WAD_MULTILEG' | 'WAD_PATH' | 'WAD_INFINITE';
 
 export interface NavItem {
   label: string;

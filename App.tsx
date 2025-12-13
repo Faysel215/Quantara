@@ -4,9 +4,12 @@ import QValPage from './pages/QValPage';
 import SukukGuardPage from './pages/SukukGuardPage';
 import ReguSimPage from './pages/ReguSimPage';
 import WadWizardPage from './pages/WadWizardPage';
+import WadMultilegPage from './pages/WadMultilegPage';
+import WadPathPage from './pages/WadPathPage';
+import WadInfinitePage from './pages/WadInfinitePage';
 import { Page } from './types';
 import { Button } from './components/ui/Shared';
-import { Hexagon, Twitter, Github, Linkedin, Globe } from 'lucide-react';
+import { Hexagon, Twitter, Github, Linkedin } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('HOME');
@@ -29,6 +32,9 @@ const App: React.FC = () => {
         case 'SUKUK': document.title = 'SukukGuard | Smart Contract Security'; break;
         case 'REGUSIM': document.title = 'ReguSim | Systemic Risk Simulation'; break;
         case 'WAD': document.title = "Wa'dWizard | Derivative Structuring"; break;
+        case 'WAD_MULTILEG': document.title = "Wa'dWizard | Multi-leg Pricing"; break;
+        case 'WAD_PATH': document.title = "Wa'dWizard | Path Integral Calc"; break;
+        case 'WAD_INFINITE': document.title = "Wa'dWizard | Infinite Trajectories"; break;
     }
   }, [activePage]);
 
@@ -36,7 +42,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1); // Remove the '#'
-      if (['QVAL', 'REGUSIM', 'SUKUK', 'WAD'].includes(hash)) {
+      if (['QVAL', 'REGUSIM', 'SUKUK', 'WAD', 'WAD_MULTILEG', 'WAD_PATH', 'WAD_INFINITE'].includes(hash)) {
         setActivePage(hash as Page);
       } else {
         setActivePage('HOME');
@@ -70,7 +76,10 @@ const App: React.FC = () => {
       case 'QVAL': return <QValPage />;
       case 'SUKUK': return <SukukGuardPage />;
       case 'REGUSIM': return <ReguSimPage />;
-      case 'WAD': return <WadWizardPage />;
+      case 'WAD': return <WadWizardPage onNavigate={navigate} />;
+      case 'WAD_MULTILEG': return <WadMultilegPage />;
+      case 'WAD_PATH': return <WadPathPage />;
+      case 'WAD_INFINITE': return <WadInfinitePage />;
       default: return <LandingPage onNavigate={navigate} />;
     }
   };
@@ -87,7 +96,7 @@ const App: React.FC = () => {
                     <div className="absolute inset-0 bg-quantum-500/50 blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
                 <span className="text-white font-bold text-lg tracking-tight">
-                    {activePage === 'HOME' ? 'Quantara' : activePage === 'QVAL' ? 'Q-Val' : activePage === 'SUKUK' ? 'SukukGuard' : activePage === 'REGUSIM' ? 'ReguSim' : "Wa'dWizard"}
+                    {activePage === 'HOME' ? 'Quantara' : activePage.startsWith('WAD') ? "Wa'dWizard" : activePage === 'QVAL' ? 'Q-Val' : activePage === 'SUKUK' ? 'SukukGuard' : 'ReguSim'}
                 </span>
             </div>
 
@@ -103,7 +112,7 @@ const App: React.FC = () => {
                         <button onClick={() => navigate('QVAL')} className={`text-sm font-medium hover:text-white transition-colors ${activePage === 'QVAL' ? 'text-white' : 'text-gray-400'}`}>Q-Val</button>
                         <button onClick={() => navigate('SUKUK')} className={`text-sm font-medium hover:text-white transition-colors ${activePage === 'SUKUK' ? 'text-white' : 'text-gray-400'}`}>SukukGuard</button>
                         <button onClick={() => navigate('REGUSIM')} className={`text-sm font-medium hover:text-white transition-colors ${activePage === 'REGUSIM' ? 'text-white' : 'text-gray-400'}`}>ReguSim</button>
-                        <button onClick={() => navigate('WAD')} className={`text-sm font-medium hover:text-white transition-colors ${activePage === 'WAD' ? 'text-white' : 'text-gray-400'}`}>Wa'dWizard</button>
+                        <button onClick={() => navigate('WAD')} className={`text-sm font-medium hover:text-white transition-colors ${activePage.startsWith('WAD') ? 'text-white' : 'text-gray-400'}`}>Wa'dWizard</button>
                     </>
                 )}
             </div>

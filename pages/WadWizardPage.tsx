@@ -1,8 +1,13 @@
 import React from 'react';
 import { Button, SectionTag, Card } from '../components/ui/Shared';
-import { Zap, Gauge, GitBranch, RefreshCcw, TrendingUp, Link } from 'lucide-react';
+import { Zap, Gauge, GitBranch, RefreshCcw, TrendingUp, Link, ArrowRight } from 'lucide-react';
+import { Page } from '../types';
 
-const WadWizardPage: React.FC = () => {
+interface WadWizardPageProps {
+  onNavigate: (page: Page) => void;
+}
+
+const WadWizardPage: React.FC<WadWizardPageProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen pt-24">
       {/* Hero */}
@@ -86,8 +91,8 @@ const WadWizardPage: React.FC = () => {
               <p className="text-gray-400 mb-12">Swipe to explore our quantum structuring capabilities</p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Card 1 */}
-                  <div className="group cursor-pointer">
+                  {/* Card 1 - Multi-leg */}
+                  <div className="group cursor-pointer" onClick={() => onNavigate('WAD_MULTILEG')}>
                       <div className="aspect-video bg-black rounded-xl border border-white/10 mb-6 overflow-hidden relative">
                           <img src="https://picsum.photos/id/132/600/400" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" alt="Multi-leg" />
                           <div className="absolute bottom-4 left-4">
@@ -95,10 +100,14 @@ const WadWizardPage: React.FC = () => {
                           </div>
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">Multi-leg Pricing</h3>
-                      <p className="text-sm text-gray-400">Seamlessly price complex instruments with multiple dependencies. Our algorithm untangles correlations instantly.</p>
+                      <p className="text-sm text-gray-400 mb-4">Seamlessly price complex instruments with multiple dependencies. Our algorithm untangles correlations instantly.</p>
+                      <button className="text-quantum-500 text-sm font-bold flex items-center gap-1 group-hover:gap-2 transition-all">
+                          Learn more <ArrowRight className="w-4 h-4" />
+                      </button>
                   </div>
-                  {/* Card 2 */}
-                  <div className="group cursor-pointer">
+                  
+                  {/* Card 2 - Path Integral */}
+                  <div className="group cursor-pointer" onClick={() => onNavigate('WAD_PATH')}>
                       <div className="aspect-video bg-black rounded-xl border border-white/10 mb-6 overflow-hidden relative">
                            <img src="https://picsum.photos/id/14/600/400" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" alt="Path Integral" />
                            <div className="absolute bottom-4 left-4">
@@ -106,10 +115,14 @@ const WadWizardPage: React.FC = () => {
                           </div>
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">Path Integral Calculation</h3>
-                      <p className="text-sm text-gray-400">Analyze infinite market trajectories simultaneously. Move beyond discrete steps to continuous flow analysis.</p>
+                      <p className="text-sm text-gray-400 mb-4">Analyze infinite market trajectories simultaneously. Move beyond discrete steps to continuous flow analysis.</p>
+                      <button className="text-quantum-500 text-sm font-bold flex items-center gap-1 group-hover:gap-2 transition-all">
+                          Learn more <ArrowRight className="w-4 h-4" />
+                      </button>
                   </div>
-                   {/* Card 3 */}
-                   <div className="group cursor-pointer">
+                  
+                   {/* Card 3 - Infinite */}
+                   <div className="group cursor-pointer" onClick={() => onNavigate('WAD_INFINITE')}>
                       <div className="aspect-video bg-black rounded-xl border border-white/10 mb-6 overflow-hidden relative">
                            <img src="https://picsum.photos/id/45/600/400" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" alt="Infinite Trajectories" />
                            <div className="absolute bottom-4 left-4">
@@ -117,7 +130,10 @@ const WadWizardPage: React.FC = () => {
                           </div>
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">Infinite Trajectories</h3>
-                      <p className="text-sm text-gray-400">Simulate outcomes with quantum precision. Capture tail risks that standard Monte Carlo simulations miss.</p>
+                      <p className="text-sm text-gray-400 mb-4">Simulate outcomes with quantum precision. Capture tail risks that standard Monte Carlo simulations miss.</p>
+                      <button className="text-quantum-500 text-sm font-bold flex items-center gap-1 group-hover:gap-2 transition-all">
+                          Learn more <ArrowRight className="w-4 h-4" />
+                      </button>
                   </div>
               </div>
           </div>
