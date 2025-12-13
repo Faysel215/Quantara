@@ -8,14 +8,11 @@ const SimulationDemo: React.FC = () => {
     const [confidence, setConfidence] = useState<number>(99);
 
     // Derived Simulation Values
-    // As paths increase (x), error decreases exponentially.
-    // Adjusted math for better visual scaling in the demo
     const precisionFactor = Math.pow(pathPower, 2) / 80; 
     const errorMarginRaw = (15 / (precisionFactor + 1)) * (confidence / 100);
     const errorMargin = errorMarginRaw.toFixed(5);
     
     const valuationBase = 42500.00;
-    // Noise reduces as error margin reduces
     const noise = (Math.random() - 0.5) * (errorMarginRaw * 50); 
     const currentValuation = (valuationBase + noise).toFixed(2);
     
@@ -24,16 +21,13 @@ const SimulationDemo: React.FC = () => {
 
     const isQuantum = pathPower > 40;
 
-    // Visual width calculation (clamped for CSS)
-    // Classical error ~12% -> ~70% width
-    // Quantum error ~0.1% -> ~1% width
+    // Visual width calculation
     const vizWidth = Math.max(1, Math.min(80, errorMarginRaw * 6));
 
-    // Generate Convergence Data for the chart
     const convergenceData = Array.from({ length: 49 }, (_, i) => {
         const power = 4 + (i * 2);
         const pf = Math.pow(power, 2) / 80;
-        const err = (15 / (pf + 1)) * 0.99; // Base curve at 99% confidence
+        const err = (15 / (pf + 1)) * 0.99;
         return { power, error: err };
     });
 
@@ -137,8 +131,7 @@ const SimulationDemo: React.FC = () => {
                         <div className="relative z-10 flex-1 flex flex-col justify-center items-center min-h-[180px] bg-gray-900/50 rounded-xl border border-white/5 mb-6 overflow-hidden transition-colors duration-500">
                             <div className="absolute top-3 left-3 text-[10px] text-gray-500 font-mono tracking-widest">PROBABILITY DENSITY</div>
                             
-                            {/* Classical Limit Ghost Region */}
-                            {/* This stays wide to show the "noise floor" of classical methods */}
+                            {/* Classical Limit Ghost Region - Visual Reference */}
                             <div 
                                 className={`absolute inset-y-4 bg-white/5 border-x border-white/10 transition-opacity duration-700 flex items-start justify-end ${isQuantum ? 'opacity-100' : 'opacity-0'}`}
                                 style={{ width: '60%', left: '20%' }}
@@ -150,7 +143,6 @@ const SimulationDemo: React.FC = () => {
                             <div className="absolute top-0 bottom-0 w-px bg-white/20 left-1/2 z-0"></div>
 
                             {/* The Probability Cloud - Dynamic Width & Color */}
-                            {/* Classical (Low N): Wide Red/Orange | Quantum (High N): Tight Blue */}
                             <div 
                                 className={`h-full transition-all duration-500 ease-out z-10 blur-md ${
                                     isQuantum 
@@ -159,7 +151,7 @@ const SimulationDemo: React.FC = () => {
                                 }`}
                                 style={{
                                     width: `${vizWidth}%`, 
-                                    opacity: 0.4 + (pathPower/200) // More solid as paths increase
+                                    opacity: 0.4 + (pathPower/200)
                                 }}
                             ></div>
                             
@@ -204,7 +196,6 @@ const SimulationDemo: React.FC = () => {
                                         dot={false}
                                         isAnimationActive={false}
                                     />
-                                    {/* Current Position Marker */}
                                     <ReferenceDot 
                                         x={pathPower} 
                                         y={Number(errorMarginRaw)} 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, SectionTag, Card, FeatureIcon } from '../components/ui/Shared';
 import { Database, Cpu, CheckCircle, Grid, BarChart3, Lock } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
 const QValPage: React.FC = () => {
   const [valuation, setValuation] = useState<number>(42850000);
