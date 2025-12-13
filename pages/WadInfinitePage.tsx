@@ -1,6 +1,232 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, SectionTag, Card } from '../components/ui/Shared';
-import { Move, TrendingUp, Search, Activity, Layers, ArrowRight, Infinity } from 'lucide-react';
+import { Move, TrendingUp, Search, Activity, Layers, ArrowRight, Infinity, Cpu, AlertTriangle, Crosshair, Scale, ShieldCheck, FileCheck } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceDot } from 'recharts';
+
+const SimulationDemo: React.FC = () => {
+    const [pathPower, setPathPower] = useState<number>(80); // 10^x
+    const [confidence, setConfidence] = useState<number>(99);
+
+    // Derived Simulation Values
+    // As paths increase (x), error decreases exponentially.
+    // Adjusted math for better visual scaling in the demo
+    const precisionFactor = Math.pow(pathPower, 2) / 80; 
+    const errorMarginRaw = (15 / (precisionFactor + 1)) * (confidence / 100);
+    const errorMargin = errorMarginRaw.toFixed(5);
+    
+    const valuationBase = 42500.00;
+    // Noise reduces as error margin reduces
+    const noise = (Math.random() - 0.5) * (errorMarginRaw * 50); 
+    const currentValuation = (valuationBase + noise).toFixed(2);
+    
+    const lowerBound = (valuationBase * (1 - errorMarginRaw/100)).toFixed(2);
+    const upperBound = (valuationBase * (1 + errorMarginRaw/100)).toFixed(2);
+
+    const isQuantum = pathPower > 40;
+
+    // Visual width calculation (clamped for CSS)
+    // Classical error ~12% -> ~70% width
+    // Quantum error ~0.1% -> ~1% width
+    const vizWidth = Math.max(1, Math.min(80, errorMarginRaw * 6));
+
+    // Generate Convergence Data for the chart
+    const convergenceData = Array.from({ length: 49 }, (_, i) => {
+        const power = 4 + (i * 2);
+        const pf = Math.pow(power, 2) / 80;
+        const err = (15 / (pf + 1)) * 0.99; // Base curve at 99% confidence
+        return { power, error: err };
+    });
+
+    return (
+        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-3xl p-8 max-w-5xl mx-auto shadow-2xl relative overflow-hidden">
+            <div className="text-center mb-10 relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
+                    <Cpu size={14} /> Interactive Lab
+                </div>
+                <h3 className="text-2xl font-bold text-white">Quantum Parameter Simulation</h3>
+                <p className="text-gray-400 text-sm mt-2">Adjust confidence and path complexity to observe valuation convergence.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10">
+                {/* Controls */}
+                <div className="lg:col-span-4 space-y-10">
+                    <div>
+                        <div className="flex justify-between items-end mb-4">
+                            <label className="text-sm font-bold text-gray-300">Effective Paths (N)</label>
+                            <div className="text-right">
+                                <span className="text-2xl font-mono font-bold text-blue-500">10<sup>{pathPower}</sup></span>
+                            </div>
+                        </div>
+                        <input 
+                            type="range" 
+                            min="4" 
+                            max="100" 
+                            step="1"
+                            value={pathPower} 
+                            onChange={(e) => setPathPower(Number(e.target.value))}
+                            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                        <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-mono uppercase">
+                            <span>Monte Carlo (10⁴)</span>
+                            <span>Quantum Limit (10¹⁰⁰)</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex justify-between items-end mb-4">
+                            <label className="text-sm font-bold text-gray-300">Confidence Margin</label>
+                            <div className="text-right">
+                                <span className="text-2xl font-mono font-bold text-cyan-400">{confidence}%</span>
+                            </div>
+                        </div>
+                        <input 
+                            type="range" 
+                            min="90" 
+                            max="99" 
+                            step="1"
+                            value={confidence} 
+                            onChange={(e) => setConfidence(Number(e.target.value))}
+                            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                        />
+                         <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-mono uppercase">
+                            <span>Standard (90%)</span>
+                            <span>Critical (99%)</span>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/5">
+                        <h4 className="text-white font-bold text-sm mb-2 flex items-center gap-2">
+                            <TrendingUp size={16} className="text-blue-500" /> Convergence Theory
+                        </h4>
+                        <p className="text-xs text-gray-400 leading-relaxed">
+                            As effective paths increase towards 10<sup>100</sup>, the Feynman path integral stabilizes. Error margin decays exponentially, isolating the true asset value from noise.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Visualizer Panel */}
+                <div className="lg:col-span-8">
+                    <div className="bg-black rounded-2xl border border-white/10 p-6 h-full relative overflow-hidden flex flex-col justify-between">
+                        {/* Background Grid */}
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+
+                        {/* Metrics Row */}
+                        <div className="relative z-10 grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-gray-900/80 backdrop-blur rounded-lg p-3 border border-white/10">
+                                <div className="text-[10px] text-gray-500 uppercase">Valuation</div>
+                                <div className="text-lg md:text-xl font-mono text-white font-bold">${currentValuation}</div>
+                            </div>
+                            <div className="bg-gray-900/80 backdrop-blur rounded-lg p-3 border border-white/10">
+                                <div className="text-[10px] text-gray-500 uppercase">Error Margin</div>
+                                <div className={`text-lg md:text-xl font-mono font-bold ${Number(errorMargin) < 0.01 ? 'text-green-400' : 'text-yellow-400'}`}>
+                                    ±{errorMargin}%
+                                </div>
+                            </div>
+                             <div className="bg-gray-900/80 backdrop-blur rounded-lg p-3 border border-white/10 flex items-center justify-between">
+                                <div>
+                                    <div className="text-[10px] text-gray-500 uppercase">State</div>
+                                    <div className={`text-xs md:text-sm font-bold ${isQuantum ? 'text-blue-400' : 'text-red-400'}`}>
+                                        {isQuantum ? 'QUANTUM' : 'CLASSICAL'}
+                                    </div>
+                                </div>
+                                {isQuantum ? <Infinity className="text-blue-500" size={20} /> : <Activity className="text-red-500" size={20} />}
+                            </div>
+                        </div>
+
+                        {/* Probability Density Viz */}
+                        <div className="relative z-10 flex-1 flex flex-col justify-center items-center min-h-[180px] bg-gray-900/50 rounded-xl border border-white/5 mb-6 overflow-hidden transition-colors duration-500">
+                            <div className="absolute top-3 left-3 text-[10px] text-gray-500 font-mono tracking-widest">PROBABILITY DENSITY</div>
+                            
+                            {/* Classical Limit Ghost Region */}
+                            {/* This stays wide to show the "noise floor" of classical methods */}
+                            <div 
+                                className={`absolute inset-y-4 bg-white/5 border-x border-white/10 transition-opacity duration-700 flex items-start justify-end ${isQuantum ? 'opacity-100' : 'opacity-0'}`}
+                                style={{ width: '60%', left: '20%' }}
+                            >
+                                <span className="text-[9px] text-gray-600 font-mono uppercase tracking-widest -rotate-90 origin-bottom-right absolute bottom-8 -right-3">Classical Limit</span>
+                            </div>
+
+                            {/* Center Line */}
+                            <div className="absolute top-0 bottom-0 w-px bg-white/20 left-1/2 z-0"></div>
+
+                            {/* The Probability Cloud - Dynamic Width & Color */}
+                            {/* Classical (Low N): Wide Red/Orange | Quantum (High N): Tight Blue */}
+                            <div 
+                                className={`h-full transition-all duration-500 ease-out z-10 blur-md ${
+                                    isQuantum 
+                                        ? 'bg-gradient-to-r from-transparent via-blue-500 to-transparent' 
+                                        : 'bg-gradient-to-r from-transparent via-red-500/50 to-transparent'
+                                }`}
+                                style={{
+                                    width: `${vizWidth}%`, 
+                                    opacity: 0.4 + (pathPower/200) // More solid as paths increase
+                                }}
+                            ></div>
+                            
+                            {/* Dynamic Bounds Brackets */}
+                             <div 
+                                className={`absolute h-1/2 border-l transition-all duration-300 z-20 flex flex-col justify-between py-1 ${isQuantum ? 'border-blue-500/50' : 'border-red-500/50'}`}
+                                style={{ left: `calc(50% - ${Math.max(4, errorMarginRaw * 80)}px)` }} 
+                             >
+                                <div className={`text-[9px] absolute -top-5 -left-2 whitespace-nowrap ${isQuantum ? 'text-blue-400' : 'text-red-400'}`}>${lowerBound}</div>
+                             </div>
+                             <div 
+                                className={`absolute h-1/2 border-r transition-all duration-300 z-20 ${isQuantum ? 'border-blue-500/50' : 'border-red-500/50'}`}
+                                style={{ right: `calc(50% - ${Math.max(4, errorMarginRaw * 80)}px)` }}
+                             >
+                                <div className={`text-[9px] absolute -top-5 -right-2 whitespace-nowrap ${isQuantum ? 'text-blue-400' : 'text-red-400'}`}>${upperBound}</div>
+                             </div>
+
+                             <div className={`absolute bottom-3 text-xs font-mono bg-black/60 px-2 py-1 rounded border transition-colors duration-300 ${isQuantum ? 'text-blue-300 border-blue-500/20' : 'text-red-300 border-red-500/20'}`}>
+                                 Spread: ${(Number(upperBound) - Number(lowerBound)).toFixed(2)}
+                             </div>
+                        </div>
+
+                        {/* Convergence Graph */}
+                        <div className="h-32 w-full relative z-10">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={convergenceData}>
+                                    <XAxis dataKey="power" type="number" domain={[4, 100]} hide />
+                                    <YAxis hide />
+                                    <Tooltip 
+                                        cursor={{ stroke: '#333', strokeWidth: 1 }}
+                                        contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '4px' }}
+                                        labelStyle={{ color: '#666', fontSize: '12px' }}
+                                        itemStyle={{ color: '#3b82f6', fontSize: '12px' }}
+                                        formatter={(value: number) => [`${value.toFixed(4)}%`, 'Error']}
+                                        labelFormatter={(label) => `10^${label} Paths`}
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="error" 
+                                        stroke="#3b82f6" 
+                                        strokeWidth={2} 
+                                        dot={false}
+                                        isAnimationActive={false}
+                                    />
+                                    {/* Current Position Marker */}
+                                    <ReferenceDot 
+                                        x={pathPower} 
+                                        y={Number(errorMarginRaw)} 
+                                        r={5} 
+                                        fill="#fff" 
+                                        stroke={isQuantum ? "#3b82f6" : "#ef4444"} 
+                                        strokeWidth={2}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                            <div className="flex justify-between text-[10px] text-gray-600 mt-1 px-1">
+                                <span>Low Fidelity (10⁴)</span>
+                                <span>Convergence Curve</span>
+                                <span>High Fidelity (10¹⁰⁰)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 const WadInfinitePage: React.FC = () => {
   return (
@@ -28,7 +254,7 @@ const WadInfinitePage: React.FC = () => {
               <p className="text-gray-400">Where standard models fragment under volatility, Wa'dWizard thrives.</p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
               {/* Classical Card */}
               <Card className="bg-gray-900 border-gray-800">
                   <div className="flex justify-between items-center mb-6">
@@ -82,36 +308,50 @@ const WadInfinitePage: React.FC = () => {
                   </div>
               </Card>
           </div>
+          
+          <div className="flex justify-center">
+              <a href="#" className="inline-flex items-center gap-2 text-blue-400 font-bold text-sm hover:text-blue-300 transition-colors group">
+                  View Detailed Benchmark Report <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </a>
+          </div>
       </section>
 
-      {/* Convergence Bar Section */}
+      {/* Interactive Simulation Section */}
       <section className="py-24 bg-white/5 border-y border-white/5">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-              <h2 className="text-2xl font-bold text-white mb-12">Convergence at Speed</h2>
-              
-              <div className="bg-black/50 border border-white/10 rounded-2xl p-8 relative overflow-hidden">
-                   <div className="flex justify-between items-center text-xs text-gray-400 mb-2 font-mono">
-                       <span>SIMULATION PATHS</span>
-                       <span className="text-blue-400">10^100 (Effective)</span>
-                   </div>
-                   <div className="h-2 bg-gray-800 rounded-full overflow-hidden mb-8">
-                       <div className="h-full bg-blue-500 w-[99%] shadow-[0_0_15px_#3b82f6]"></div>
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-4">
-                       <div className="bg-white/5 rounded p-4">
-                           <div className="text-[10px] uppercase text-gray-500 mb-1">Valuation Time</div>
-                           <div className="text-2xl font-mono text-white">0.042s</div>
-                       </div>
-                       <div className="bg-white/5 rounded p-4">
-                           <div className="text-[10px] uppercase text-gray-500 mb-1">Confidence</div>
-                           <div className="text-2xl font-mono text-quantum-500">99.99%</div>
-                       </div>
-                   </div>
-                   
-                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 blur-3xl pointer-events-none"></div>
-              </div>
+          <div className="max-w-7xl mx-auto px-6">
+              <SimulationDemo />
           </div>
+      </section>
+
+      {/* Shariah Compliance Checks Section */}
+      <section className="px-6 max-w-7xl mx-auto py-24 border-b border-white/5">
+         <div className="flex flex-col md:flex-row gap-12 items-start">
+             <div className="md:w-1/3">
+                 <SectionTag>Shariah Governance</SectionTag>
+                 <h2 className="text-3xl font-bold text-white mb-6">Quantum Compliance Checks</h2>
+                 <p className="text-gray-400 mb-6">
+                     Unlike classical models which check compliance post-trade, our engine embeds Shariah logic into the wavefunction itself. Every valid path in the integral must satisfy these constraints.
+                 </p>
+                 <Button variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">Download Fatwa</Button>
+             </div>
+             
+             <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 {[
+                     { title: "Gharar (Uncertainty) Limit", desc: "Quantifies contractual ambiguity. Any path exceeding the 5% threshold is collapsed and excluded from valuation." },
+                     { title: "Riba (Interest) Screen", desc: "Deconstructs forward pricing to ensure returns stem from asset volatility and utility, not pure time-value of money." },
+                     { title: "Maysir (Speculation) Filter", desc: "Identifies and prunes trajectories where payoff profiles resemble pure gambling (zero-sum) without underlying asset movement." },
+                     { title: "Sequence Validation", desc: "Ensures the 'Promise' always precedes 'Possession' and 'Sale' in 100% of simulated histories, preserving contract validity." }
+                 ].map((item, i) => (
+                     <Card key={i} className="bg-white/5 hover:bg-white/10 transition-colors border-white/5">
+                         <div className="flex items-center gap-3 mb-3">
+                             <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                             <h3 className="font-bold text-white text-lg">{item.title}</h3>
+                         </div>
+                         <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                     </Card>
+                 ))}
+             </div>
+         </div>
       </section>
 
       {/* Applications Grid */}
