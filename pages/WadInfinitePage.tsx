@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, SectionTag, Card } from '../components/ui/Shared';
-import { Move, TrendingUp, Search, Activity, Layers, ArrowRight, Infinity, Cpu, AlertTriangle, Crosshair, Scale, ShieldCheck, FileCheck } from 'lucide-react';
+import { Move, TrendingUp, Search, Activity, Layers, ArrowRight, ArrowLeft, Infinity, Cpu, AlertTriangle, Crosshair, Scale, ShieldCheck, FileCheck } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceDot } from 'recharts';
 
 const SimulationDemo: React.FC = () => {
@@ -21,8 +21,8 @@ const SimulationDemo: React.FC = () => {
 
     const isQuantum = pathPower > 40;
 
-    // Visual width calculation
-    const vizWidth = Math.max(1, Math.min(80, errorMarginRaw * 6));
+    // Visual width calculation - Cap at 70% for Classical Limit visual consistency
+    const vizWidth = Math.max(1.5, Math.min(70, errorMarginRaw * 5.8));
 
     const convergenceData = Array.from({ length: 49 }, (_, i) => {
         const power = 4 + (i * 2);
@@ -48,7 +48,9 @@ const SimulationDemo: React.FC = () => {
                         <div className="flex justify-between items-end mb-4">
                             <label className="text-sm font-bold text-gray-300">Effective Paths (N)</label>
                             <div className="text-right">
-                                <span className="text-2xl font-mono font-bold text-blue-500">10<sup>{pathPower}</sup></span>
+                                <span className={`text-2xl font-mono font-bold transition-colors duration-300 ${isQuantum ? 'text-blue-500' : 'text-red-500'}`}>
+                                    10<sup>{pathPower}</sup>
+                                </span>
                             </div>
                         </div>
                         <input 
@@ -58,7 +60,7 @@ const SimulationDemo: React.FC = () => {
                             step="1"
                             value={pathPower} 
                             onChange={(e) => setPathPower(Number(e.target.value))}
-                            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                            className={`w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer ${isQuantum ? 'accent-blue-500' : 'accent-red-500'}`}
                         />
                         <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-mono uppercase">
                             <span>Monte Carlo (10⁴)</span>
@@ -88,12 +90,16 @@ const SimulationDemo: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-white/5 rounded-lg border border-white/5">
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/5 transition-colors duration-500 hover:bg-white/10">
                         <h4 className="text-white font-bold text-sm mb-2 flex items-center gap-2">
-                            <TrendingUp size={16} className="text-blue-500" /> Convergence Theory
+                            <TrendingUp size={16} className={isQuantum ? "text-blue-500" : "text-red-500"} /> 
+                            {isQuantum ? "Quantum Convergence" : "Classical Dispersion"}
                         </h4>
                         <p className="text-xs text-gray-400 leading-relaxed">
-                            As effective paths increase towards 10<sup>100</sup>, the Feynman path integral stabilizes. Error margin decays exponentially, isolating the true asset value from noise.
+                            {isQuantum 
+                                ? "At high path counts, the integral stabilizes into a coherent state. Volatility cancels out, leaving a precise valuation signal."
+                                : "Low path counts suffer from random sampling noise (shot noise), resulting in a wide variance characteristic of Monte Carlo methods."
+                            }
                         </p>
                     </div>
                 </div>
@@ -128,49 +134,60 @@ const SimulationDemo: React.FC = () => {
                         </div>
 
                         {/* Probability Density Viz */}
-                        <div className="relative z-10 flex-1 flex flex-col justify-center items-center min-h-[180px] bg-gray-900/50 rounded-xl border border-white/5 mb-6 overflow-hidden transition-colors duration-500">
-                            <div className="absolute top-3 left-3 text-[10px] text-gray-500 font-mono tracking-widest">PROBABILITY DENSITY</div>
+                        <div className="relative z-10 flex-1 flex flex-col justify-center items-center min-h-[200px] bg-gray-900/50 rounded-xl border border-white/5 mb-6 overflow-hidden transition-colors duration-500 group">
+                            <div className="absolute top-3 left-3 text-[10px] text-gray-500 font-mono tracking-widest z-20">PROBABILITY DENSITY</div>
                             
-                            {/* Classical Limit Ghost Region - Visual Reference */}
-                            <div 
-                                className={`absolute inset-y-4 bg-white/5 border-x border-white/10 transition-opacity duration-700 flex items-start justify-end ${isQuantum ? 'opacity-100' : 'opacity-0'}`}
-                                style={{ width: '60%', left: '20%' }}
-                            >
-                                <span className="text-[9px] text-gray-600 font-mono uppercase tracking-widest -rotate-90 origin-bottom-right absolute bottom-8 -right-3">Classical Limit</span>
-                            </div>
-
                             {/* Center Line */}
-                            <div className="absolute top-0 bottom-0 w-px bg-white/20 left-1/2 z-0"></div>
+                            <div className="absolute top-4 bottom-4 w-px bg-white/10 left-1/2 z-0"></div>
+
+                            {/* Classical Limit Ghost Box - Always visible as reference, highlights when active */}
+                            <div 
+                                className={`absolute h-3/4 border-x-2 border-dashed rounded-lg transition-all duration-700 flex flex-col justify-end items-center pb-2
+                                    ${isQuantum ? 'border-white/5 bg-transparent' : 'border-red-500/40 bg-red-900/10'}
+                                `}
+                                style={{ width: '70%' }}
+                            >
+                                <span className={`text-[9px] font-mono tracking-widest uppercase transition-colors duration-300 ${isQuantum ? 'text-gray-700' : 'text-red-400'}`}>
+                                    Classical Limit (Monte Carlo)
+                                </span>
+                                
+                                {/* Width Arrows for Classical Mode */}
+                                <div className={`w-full flex justify-between px-2 transition-opacity duration-300 ${isQuantum ? 'opacity-0' : 'opacity-100'}`}>
+                                    <ArrowLeft size={12} className="text-red-500" />
+                                    <ArrowRight size={12} className="text-red-500" />
+                                </div>
+                            </div>
 
                             {/* The Probability Cloud - Dynamic Width & Color */}
                             <div 
-                                className={`h-full transition-all duration-500 ease-out z-10 blur-md ${
-                                    isQuantum 
-                                        ? 'bg-gradient-to-r from-transparent via-blue-500 to-transparent' 
-                                        : 'bg-gradient-to-r from-transparent via-red-500/50 to-transparent'
-                                }`}
+                                className={`h-full transition-all duration-300 ease-out z-10 blur-xl mix-blend-screen relative
+                                    ${isQuantum 
+                                        ? 'bg-blue-500 shadow-[0_0_60px_rgba(59,130,246,0.5)]' 
+                                        : 'bg-red-500 shadow-[0_0_40px_rgba(239,68,68,0.3)]'
+                                    }`}
                                 style={{
                                     width: `${vizWidth}%`, 
-                                    opacity: 0.4 + (pathPower/200)
+                                    opacity: isQuantum ? 0.9 : 0.5,
+                                    minWidth: '4px'
                                 }}
-                            ></div>
+                            >
+                                {/* Inner bright core for Quantum sharpness */}
+                                {isQuantum && <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2px] bg-white blur-[1px] opacity-70"></div>}
+                            </div>
                             
-                            {/* Dynamic Bounds Brackets */}
-                             <div 
-                                className={`absolute h-1/2 border-l transition-all duration-300 z-20 flex flex-col justify-between py-1 ${isQuantum ? 'border-blue-500/50' : 'border-red-500/50'}`}
-                                style={{ left: `calc(50% - ${Math.max(4, errorMarginRaw * 80)}px)` }} 
-                             >
-                                <div className={`text-[9px] absolute -top-5 -left-2 whitespace-nowrap ${isQuantum ? 'text-blue-400' : 'text-red-400'}`}>${lowerBound}</div>
-                             </div>
-                             <div 
-                                className={`absolute h-1/2 border-r transition-all duration-300 z-20 ${isQuantum ? 'border-blue-500/50' : 'border-red-500/50'}`}
-                                style={{ right: `calc(50% - ${Math.max(4, errorMarginRaw * 80)}px)` }}
-                             >
-                                <div className={`text-[9px] absolute -top-5 -right-2 whitespace-nowrap ${isQuantum ? 'text-blue-400' : 'text-red-400'}`}>${upperBound}</div>
+                             {/* Floating Value Tag */}
+                             <div className={`absolute bottom-6 font-mono text-xs font-bold px-3 py-1 rounded-full border backdrop-blur-md transition-all duration-500 z-30
+                                ${isQuantum ? 'text-blue-300 border-blue-500/50 bg-blue-900/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'text-red-300 border-red-500/50 bg-red-900/30'}
+                             `}>
+                                 {isQuantum ? 'QUANTUM PRECISION' : 'HIGH VARIANCE'}
                              </div>
 
-                             <div className={`absolute bottom-3 text-xs font-mono bg-black/60 px-2 py-1 rounded border transition-colors duration-300 ${isQuantum ? 'text-blue-300 border-blue-500/20' : 'text-red-300 border-red-500/20'}`}>
-                                 Spread: ${(Number(upperBound) - Number(lowerBound)).toFixed(2)}
+                             {/* Dynamic Bounds Text */}
+                             <div className={`absolute top-1/2 -translate-y-1/2 left-4 text-[9px] font-mono transition-colors duration-300 ${isQuantum ? 'text-gray-600' : 'text-red-400'}`}>
+                                 ${lowerBound}
+                             </div>
+                             <div className={`absolute top-1/2 -translate-y-1/2 right-4 text-[9px] font-mono transition-colors duration-300 ${isQuantum ? 'text-gray-600' : 'text-red-400'}`}>
+                                 ${upperBound}
                              </div>
                         </div>
 
