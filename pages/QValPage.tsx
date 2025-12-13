@@ -1,19 +1,56 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, SectionTag, Card, FeatureIcon } from '../components/ui/Shared';
 import { Database, Cpu, CheckCircle, Grid, BarChart3, Lock } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, AreaChart, Area } from 'recharts';
 
-const data = [
-  { time: 'Q1 Start', value: 4000, projected: 4100 },
-  { time: 'Q1 Mid', value: 4500, projected: 4600 },
-  { time: 'Q1 End', value: 5800, projected: 5000 },
-  { time: 'Q2 Start', value: 6200, projected: 6500 },
-  { time: 'Q2 Mid', value: 7800, projected: 8000 },
-  { time: 'Today', value: 8500, projected: 9200 },
-  { time: 'Forecast', value: 9800, projected: 10500 },
-];
-
 const QValPage: React.FC = () => {
+  const [valuation, setValuation] = useState<number>(42850000);
+  const [trend, setTrend] = useState<number>(2.4);
+  const [graphData, setGraphData] = useState([
+    { time: 'Q1 Start', value: 4000, projected: 4100 },
+    { time: 'Q1 Mid', value: 4500, projected: 4600 },
+    { time: 'Q1 End', value: 5800, projected: 5000 },
+    { time: 'Q2 Start', value: 6200, projected: 6500 },
+    { time: 'Q2 Mid', value: 7800, projected: 8000 },
+    { time: 'Today', value: 8500, projected: 9200 },
+    { time: 'Forecast', value: 9800, projected: 10500 },
+  ]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Simulate market movement with random flux
+      const flux = (Math.random() - 0.45) * 0.008; // Slight upward bias, volatility
+      
+      setValuation(prev => Math.floor(prev * (1 + flux)));
+      
+      setTrend(prev => {
+        const newTrend = prev + (flux * 100);
+        return Math.min(Math.max(newTrend, -5), 15); // Clamp between -5% and 15%
+      });
+
+      setGraphData(prev => {
+        const newData = [...prev];
+        // Jitter "Today" value
+        const todayFlux = (Math.random() - 0.5) * 150;
+        newData[5] = { 
+            ...newData[5], 
+            value: Math.max(4000, Math.round(newData[5].value + todayFlux)) 
+        };
+        
+        // Jitter "Forecast" projected
+        const forecastFlux = (Math.random() - 0.4) * 200;
+        newData[6] = { 
+            ...newData[6], 
+            projected: Math.max(5000, Math.round(newData[6].projected + forecastFlux)) 
+        };
+        
+        return newData;
+      });
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen pt-24">
        {/* Hero */}
@@ -47,11 +84,18 @@ const QValPage: React.FC = () => {
                  <div className="absolute bottom-6 left-6 right-6 bg-quantum-900/90 backdrop-blur border border-white/10 rounded-xl p-4">
                     <div className="flex justify-between items-end mb-2">
                         <span className="text-xs text-gray-400 uppercase tracking-wider">Real-Time Valuation</span>
-                        <span className="text-quantum-400 text-xs font-bold bg-quantum-500/10 px-2 py-0.5 rounded">+2.4% (Synth)</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded transition-colors duration-500 ${trend >= 0 ? 'text-quantum-400 bg-quantum-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                            {trend > 0 ? '+' : ''}{trend.toFixed(2)}% (Synth)
+                        </span>
                     </div>
-                    <div className="text-3xl font-mono text-white">$42,850,000</div>
+                    <div className="text-3xl font-mono text-white transition-all duration-300">
+                        ${valuation.toLocaleString()}
+                    </div>
                     <div className="h-1 bg-gray-700 mt-2 rounded-full overflow-hidden">
-                        <div className="h-full w-3/4 bg-quantum-500 rounded-full"></div>
+                        <div 
+                            className="h-full bg-quantum-500 rounded-full transition-all duration-500" 
+                            style={{ width: `${Math.min(100, Math.max(0, 50 + trend * 5))}%` }}
+                        ></div>
                     </div>
                  </div>
              </div>
@@ -143,7 +187,12 @@ const QValPage: React.FC = () => {
                              </div>
                              <div className="flex justify-between items-center bg-quantum-500/10 p-3 rounded-lg border border-quantum-500/20">
                                 <span className="text-white text-sm">Q-Val Accuracy</span>
-                                <span className="text-quantum-500 font-mono font-bold text-sm">Real-time</span>
+                                <span className="text-quantum-500 font-mono font-bold text-sm flex items-center gap-2">
+                                    Real-time <span className="relative flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-quantum-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-quantum-500"></span>
+                                    </span>
+                                </span>
                              </div>
                         </div>
                     </div>
@@ -152,7 +201,7 @@ const QValPage: React.FC = () => {
                 
                 <div className="h-[400px] w-full bg-gradient-to-b from-transparent to-quantum-900/50 relative">
                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <LineChart data={graphData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorVal" x1="0" y1="0" x2="1" y2="0">
                                     <stop offset="0%" stopColor="#22c55e" />
@@ -172,6 +221,7 @@ const QValPage: React.FC = () => {
                                 strokeWidth={4} 
                                 dot={false} 
                                 activeDot={{ r: 8, fill: '#22c55e' }}
+                                isAnimationActive={false}
                             />
                             <Line 
                                 type="stepAfter" 
@@ -180,11 +230,12 @@ const QValPage: React.FC = () => {
                                 strokeWidth={2} 
                                 strokeDasharray="5 5" 
                                 dot={false} 
+                                isAnimationActive={false}
                             />
                         </LineChart>
                      </ResponsiveContainer>
                      <div className="absolute top-1/2 left-3/4 transform -translate-y-1/2 -translate-x-1/2">
-                         <div className="bg-quantum-900/80 backdrop-blur border border-quantum-500 text-quantum-500 text-xs px-3 py-1 rounded-full animate-pulse">
+                         <div className="bg-quantum-900/80 backdrop-blur border border-quantum-500 text-quantum-500 text-xs px-3 py-1 rounded-full animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.3)]">
                              Market Shift Detected
                          </div>
                      </div>
